@@ -99,7 +99,7 @@ jobs:
                     _url="${downloads["${WHICH}"]}" ;
                     downloads["${_url}"]="${_exit_status}" ;
                     downloads["${WHICH}"]="${_exit_status}" ;
-                    (( downloads['failed']+="${_exit_status}" )) ;
+                    (( 1 | ( downloads['failed']+="${_exit_status}" ) )) ;
                     wait -fn -p WHICH && _exit_status=0 || _exit_status=$? ;
                 done ;
                 declare -p downloads ;
