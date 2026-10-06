@@ -34,7 +34,10 @@ jobs:
         shell: bash
         run: |
             export DEBIAN_FRONTEND='noninteractive'
+
             export GITHUB_API_KEY="${GITHUB_TOKEN:-"${GH_TOKEN:-}"}"
+            [[ -n "${GITHUB_API_KEY} ]] || unset -v GITHUB_API_KEY
+
             export https_proxy='http://tor:8118'
             # socat TCP-LISTEN:8118,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/proxy.sock &
             # socat TCP-LISTEN:1080,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/ftp.sock &
@@ -52,26 +55,26 @@ jobs:
             command -v asfald || {
                 aria2c --no-conf --no-netrc --dir='.bin' --out='asfald' \
                     --lowest-speed-limit=1 --max-tries=25 \
-                    --allow-overwrite=true --check-integrity=true --auto-file-renaming=false \
-                    --summary-interval=0 --console-log-level='info' \
+                    --allow-overwrite=true --check-integrity=true \
+                    --auto-file-renaming=false --summary-interval=0 \
                     --remote-time=true --max-file-not-found=5 --always-resume=false \
-                    --max-connection-per-server=2 --min-split-size=4M --retry-wait=20 \
+                    --max-connection-per-server=2 --min-split-size=1M --retry-wait=20 \
                     --show-console-readout=false --download-result='full' \
                     --https-proxy="${https_proxy}" --http-proxy="${https_proxy}" \
                     --checksum='sha-256=0b7e1270ecc5a4c37785511b032477ddc3a7cf718b0b2f8542229f39adf2ce6a' \
                     'https://github.com/asfaload/asfald/releases/download/v0.9.0/asfald-x86_64-unknown-linux-musl' && \
-                install -v -t /usr/local/sbin '.bin/asfald' || rm -f -r .bin; \
-                rm -f -r .bin
+                install -v -t /usr/local/sbin '.bin/asfald' || rm -f -r .bin ; \
+                rm -v -f -r .bin ;
             }
-            set -x
 
             resolve_github_latest() {
+                # curl uses https_proxy automatically
                 curl -sSiI "$1" | \
                     tr '\r' '\n' | \
                     awk -v IGNORECASE=1 '$1 ~ /^location:/ { \
                         sub(/^.*\/download\//, ""); \
                         sub(/\/.*$/, ""); \
-                        print; exit; }'
+                        print; exit; }' ;
             }
 
             fetch_apks() (
@@ -82,14 +85,27 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
-                declare -p GITHUB_API_KEY
-                [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
+                local -A downloads
+                downloads['failed']=0
                 local _arg; for _arg in "$@"; do
-                    asfald -v "${release_url}/${_arg}" || exit
+                    asfald -qv "${release_url}/${_arg}" &
+                    downloads[$!]="${release_url}/${_arg}" ;
                 done
+                local _url _exit_status
+                wait -fn -p WHICH
+                _exit_status=$?
+                while declare -p WHICH >/dev/null 2>&1; do
+                    _url="${downloads["${WHICH}"]}" ;
+                    downloads["${_url}"]="${_exit_status}" ;
+                    downloads["${WHICH}"]="${_exit_status}" ;
+                    downloads['failed']+="${_exit_status}" ;
+                    wait -fn -p WHICH ;
+                    _exit_status=$? ;
+                done ;
+                [[ 0 == "${downloads['failed']}" ]] ;
             )
-            fetch_apks {arm,{arm,x}64}_ChromePublic.apk
+            # fetch_apks {arm,{arm,x}64}_ChromePublic.apk
 
             fetch_rclone() (
                 local dir='github/rclone'
@@ -105,15 +121,13 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
-                local GITHUB_API_KEY
-                [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
                 local _arg; for _arg in "$@"; do
                     if if [[ 'LATEST' == "${rclone_version}" ]]; then
                         _arg="${_arg//vLATEST/"${latest_version}"}"
-                    fi
-                    asfald -qv "${release_url}/${_arg}" || exit
-                done
+                    fi ;
+                    asfald -qv "${release_url}/${_arg}" || exit ;
+                done ;
             )
             _artifact="rclone-v${VERSION_RCLONE:-LATEST}-linux-amd64.zip*
             fetch_rclone "${VERSION_RCLONE:-LATEST}" 'SHA256SUMS' "${_artifact}"
@@ -134,6 +148,7 @@ jobs:
             test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
             apt install -y fdroidserver
 
+            fetch_apks {arm,{arm,x}64}_ChromePublic.apk
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
             cd fdroid/ || exit
 
