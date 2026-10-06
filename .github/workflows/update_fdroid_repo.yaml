@@ -134,7 +134,7 @@ jobs:
             _artifact="rclone-v${VERSION_RCLONE:-LATEST}-linux-amd64.zip"
             fetch_rclone "${VERSION_RCLONE:-LATEST}" 'SHA256SUMS' "${_artifact}"
             ( cd 'github/rclone' && \
-                awk -v artifact="${_artifact}" '$0 ~ artifact "$" { print $1; exit; }' 'SHA256SUMS' | \
+                awk -v artifact="${_artifact}" '$0 ~ artifact "$" { print; exit; }' 'SHA256SUMS' | \
                 sha256sum --check --strict --warn && \
                 unzip -o -d extracted "${_artifact}" )
             unset -v _artifact
