@@ -63,10 +63,7 @@ jobs:
                 install -v -t /usr/local/sbin '.bin/asfald' || rm -f -r .bin; \
                 rm -f -r .bin
             }
-            declare -p PATH
-            command -v asfald
             set -x
-            asfald --version
 
             resolve_github_latest() {
                 curl -sSiI "$1" | \
@@ -85,9 +82,13 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
+                declare -p PATH
+                command -v asfald
+                asfald --version
 
                 local _arg; for _arg in "$@"; do
-                    asfald -qv "${release_url}/${_arg}" || exit
+                    curl -ivIS "${release_url}/${_arg}" || :
+                    asfald -v "${release_url}/${_arg}" || exit
                 done
             )
             fetch_apks {arm,{arm,x}64}_ChromePublic.apk
