@@ -145,6 +145,7 @@ jobs:
             test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
             # apt install -y fdroidserver
 
+            mkdir -p fdroid/repo
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
             cd fdroid/ || exit
 
