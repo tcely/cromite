@@ -85,9 +85,7 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
-                set -x
 
-                set +e
                 local -A downloads
                 downloads['failed']=0
                 local _arg ;
@@ -96,19 +94,19 @@ jobs:
                     downloads[$!]="${release_url}/${_arg}" ;
                 done ;
                 local _url _exit_status
-                wait -fn -p WHICH
-                _exit_status=$?
+                wait -fn -p WHICH && _exit_status=0 || _exit_status=$?
                 while declare -p WHICH >/dev/null 2>&1 ; do
                     _url="${downloads["${WHICH}"]}" ;
                     downloads["${_url}"]="${_exit_status}" ;
                     downloads["${WHICH}"]="${_exit_status}" ;
-                    downloads['failed']+="${_exit_status}" ;
-                    wait -fn -p WHICH ;
-                    _exit_status=$? ;
+                    (( downloads['failed']+="${_exit_status}" )) ;
+                    wait -fn -p WHICH && _exit_status=0 || _exit_status=$? ;
                 done ;
+                declare -p downloads ;
                 [[ 0 == "${downloads['failed']}" ]] ;
             )
-            # fetch_apks {arm,{arm,x}64}_ChromePublic.apk
+            set -x
+            fetch_apks {arm,{arm,x}64}_ChromePublic.apk
 
             fetch_rclone() (
                 local dir='github/rclone'
@@ -152,8 +150,6 @@ jobs:
             test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
             # apt install -y fdroidserver
 
-            set -x
-            fetch_apks {arm,{arm,x}64}_ChromePublic.apk
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
             cd fdroid/ || exit
 
