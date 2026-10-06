@@ -25,7 +25,9 @@ jobs:
 
     services:
       tor:
-        image: docker.io/dockurr/tor
+        image: dperson/torproxy:latest
+        env:
+          EXITNODE: "0"
 
     steps:
       - name: Update fdroid repo
