@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ github.event.inputs.type }}
 
     container:
-      image: uazo/fdroidserver:latest
+      image: ghcr.io/tcely/fdroidserver:latest
       volumes:
         - /tmp/forward-proxy:/tmp/forward-proxy
 
@@ -39,7 +39,7 @@ jobs:
                 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' \
                 "${https_proxy}" "${https_proxy}"
 
-            cd /
+            cd /opt/venv
             source ./fdroidserver-env/bin/activate
 
             apt update && apt install -y aria2 curl gnupg unzip
@@ -139,9 +139,8 @@ jobs:
             ( cd ~/.config/rclone/ && \
                 echo >|./rclone.conf '${{ secrets.RCLONE_CONF }}' )
 
+            rclone --version
             rclone sync ftp:www.cromite.org/fdroid fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
-
-            test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
 
             mkdir -p fdroid/repo
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
