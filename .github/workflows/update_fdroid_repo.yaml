@@ -41,7 +41,7 @@ jobs:
                 'Acquire::https::Proxy "%s";\n' "${https_proxy}"
 
             cd /
-            nc -zv tor 8118 || :
+            curl -v -o page.out --proxy "${https_proxy}" -- 'https://torproject.org' || :
             source ./fdroidserver-env/bin/activate
 
             apt update && apt install -y aria2 curl unzip
