@@ -36,7 +36,7 @@ jobs:
             export DEBIAN_FRONTEND='noninteractive'
 
             export GITHUB_API_KEY="${GITHUB_TOKEN:-"${GH_TOKEN:-}"}"
-            [[ -n "${GITHUB_API_KEY} ]] || unset -v GITHUB_API_KEY
+            [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
             export https_proxy='http://tor:8118'
             # socat TCP-LISTEN:8118,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/proxy.sock &
