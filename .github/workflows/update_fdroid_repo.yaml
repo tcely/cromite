@@ -5,8 +5,8 @@ on:
     inputs:
       type:
         description: 'runner? [dev/ci]'
-        required: true
-        default: 'ci'
+        required: false
+        default: 'ubuntu-slim'
 
 env:
   REMOVEDOCKERSUPPORT: true
@@ -113,22 +113,23 @@ jobs:
             ( cd ~/.config/rclone/ && \
                 echo >|./rclone.conf '${{ secrets.RCLONE_CONF }}' )
 
-            rclone sync ftp:www.cromite.org/fdroid fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
+            # rclone sync ftp:www.cromite.org/fdroid fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
 
+            mkdir -p fdroid/repo
             test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
             apt install -y fdroidserver
 
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
             cd fdroid/ || exit
 
-            gpg -o config.yml -d --passphrase "${{ secrets.FDROID_PASSPHRASE }}" --batch config.yml.asc
-            gpg -o keystore.p12 -d --passphrase "${{ secrets.FDROID_PASSPHRASE }}" --batch keystore.p12.asc
+            # gpg -o config.yml -d --passphrase "${{ secrets.FDROID_PASSPHRASE }}" --batch config.yml.asc
+            # gpg -o keystore.p12 -d --passphrase "${{ secrets.FDROID_PASSPHRASE }}" --batch keystore.p12.asc
 
-            fdroid update -c; fdroid update
+            # fdroid update -c; fdroid update
             rm -v -f config.yml keystore.p12
             cd ..
 
             [[ ! -e fdroid/config.yml && ! -e fdroid/keystore.p12 ]] || exit
 
-            rclone sync fdroid ftp:www.cromite.org/fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
-            rclone sync fdroid ftp:www.cromite.org/fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
+            # rclone sync fdroid ftp:www.cromite.org/fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
+            # rclone sync fdroid ftp:www.cromite.org/fdroid --log-level INFO --ftp-socks-proxy 127.0.0.1:1080
