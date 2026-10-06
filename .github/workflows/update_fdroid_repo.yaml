@@ -49,19 +49,24 @@ jobs:
             apt update && apt install -y aria2 curl unzip
 
             # Install asfald
-            aria2c --no-conf --no-netrc --dir='.bin' --out='asfald' \
-                --lowest-speed-limit=1 --max-tries=25 \
-                --allow-overwrite=true --check-integrity=true --auto-file-renaming=false \
-                --summary-interval=0 --console-log-level='info' \
-                --remote-time=true --max-file-not-found=5 --always-resume=false \
-                --max-connection-per-server=2 --min-split-size=4M --retry-wait=20 \
-                --show-console-readout=false --download-result='full' \
-                --https-proxy="${https_proxy}" --http-proxy="${https_proxy}" \
-                --checksum='sha-256=0b7e1270ecc5a4c37785511b032477ddc3a7cf718b0b2f8542229f39adf2ce6a' \
-                'https://github.com/asfaload/asfald/releases/download/v0.9.0/asfald-x86_64-unknown-linux-musl'
-            chmod -c a+rx '.bin/asfald'
+            command -v asfald || {
+                aria2c --no-conf --no-netrc --dir='.bin' --out='asfald' \
+                    --lowest-speed-limit=1 --max-tries=25 \
+                    --allow-overwrite=true --check-integrity=true --auto-file-renaming=false \
+                    --summary-interval=0 --console-log-level='info' \
+                    --remote-time=true --max-file-not-found=5 --always-resume=false \
+                    --max-connection-per-server=2 --min-split-size=4M --retry-wait=20 \
+                    --show-console-readout=false --download-result='full' \
+                    --https-proxy="${https_proxy}" --http-proxy="${https_proxy}" \
+                    --checksum='sha-256=0b7e1270ecc5a4c37785511b032477ddc3a7cf718b0b2f8542229f39adf2ce6a' \
+                    'https://github.com/asfaload/asfald/releases/download/v0.9.0/asfald-x86_64-unknown-linux-musl' && \
+                install -v -t /usr/local/sbin '.bin/asfald' || rm -f -r .bin; \
+                rm -f -r .bin
+            }
+            declare -p PATH
+            command -v asfald
             set -x
-            PATH="$(realpath .bin):${PATH}"
+            asfald --version
 
             resolve_github_latest() {
                 curl -sSiI "$1" | \
