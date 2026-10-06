@@ -82,12 +82,10 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
-                declare -p PATH
-                command -v asfald
-                asfald --version
+                declare -p GITHUB_API_KEY
+                [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
                 local _arg; for _arg in "$@"; do
-                    curl -ivIS "${release_url}/${_arg}" || :
                     asfald -v "${release_url}/${_arg}" || exit
                 done
             )
@@ -107,6 +105,8 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
+                local GITHUB_API_KEY
+                [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
                 local _arg; for _arg in "$@"; do
                     if if [[ 'LATEST' == "${rclone_version}" ]]; then
