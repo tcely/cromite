@@ -44,7 +44,6 @@ jobs:
             printf -- >|/etc/apt/apt.conf.d/proxy.conf \
                 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' \
                 "${https_proxy}" "${https_proxy}"
-            cat -vn /etc/apt/apt.conf.d/proxy.conf
 
             cd /
             source ./fdroidserver-env/bin/activate
@@ -89,7 +88,9 @@ jobs:
                 local -A downloads
                 downloads['failed']=0
                 local _arg ; for _arg in "$@" ; do
-                    asfald -qv "${release_url}/${_arg}" &
+                    printf -- 'Started download for: %s\n' \
+                        "${release_url}/${_arg}" ;
+                    asfald -v "${release_url}/${_arg}" &
                     downloads[$!]="${release_url}/${_arg}" ;
                 done ;
                 local _url _exit_status
@@ -124,12 +125,16 @@ jobs:
                     if [[ 'LATEST' == "${rclone_version}" ]]; then
                         _arg="${_arg//vLATEST/"${latest_version}"}"
                     fi ;
-                    asfald -qv "${release_url}/${_arg}" || exit ;
+                    printf -- 'Started download for: %s\n' \
+                        "${release_url}/${_arg}" ;
+                    asfald -v "${release_url}/${_arg}" || exit ;
                 done ;
             )
             _artifact="rclone-v${VERSION_RCLONE:-LATEST}-linux-amd64.zip"
             fetch_rclone "${VERSION_RCLONE:-LATEST}" 'SHA256SUMS' "${_artifact}"
             ( cd 'github/rclone' && \
+                printf -- 'Started verification of: %s\n' \
+                        "${_artifact}" ;
                 awk -v artifact="${_artifact}" '$0 ~ artifact "$" { print; exit; }' 'SHA256SUMS' | \
                 sha256sum --check --strict --warn && \
                 unzip -o -d extracted "${_artifact}" )
