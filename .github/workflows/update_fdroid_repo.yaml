@@ -88,14 +88,15 @@ jobs:
 
                 local -A downloads
                 downloads['failed']=0
-                local _arg; for _arg in "$@"; do
+                local _arg ;
+                for _arg in "$@" ; do
                     asfald -qv "${release_url}/${_arg}" &
                     downloads[$!]="${release_url}/${_arg}" ;
-                done
+                done ;
                 local _url _exit_status
                 wait -fn -p WHICH
                 _exit_status=$?
-                while declare -p WHICH >/dev/null 2>&1; do
+                while declare -p WHICH >/dev/null 2>&1 ; do
                     _url="${downloads["${WHICH}"]}" ;
                     downloads["${_url}"]="${_exit_status}" ;
                     downloads["${WHICH}"]="${_exit_status}" ;
@@ -115,15 +116,16 @@ jobs:
                 local release_url="${releases_url}/download/${release}"
 
                 if [[ 'LATEST' == "${rclone_version}" ]]; then
-                    local latest_version="$(resolve_github_latest "${releases_url}/latest/download/file")"
-                    release_url="${releases_url}/download/${latest_version}"
-                fi
+                    local latest_version="$(resolve_github_latest "${releases_url}/latest/download/file")" ;
+                    release_url="${releases_url}/download/${latest_version}" ;
+                fi ;
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
 
-                local _arg; for _arg in "$@"; do
-                    if if [[ 'LATEST' == "${rclone_version}" ]]; then
+                local _arg ;
+                for _arg in "$@"; do
+                    if [[ 'LATEST' == "${rclone_version}" ]]; then
                         _arg="${_arg//vLATEST/"${latest_version}"}"
                     fi ;
                     asfald -qv "${release_url}/${_arg}" || exit ;
