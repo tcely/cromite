@@ -23,15 +23,19 @@ jobs:
       volumes:
         - /tmp/forward-proxy:/tmp/forward-proxy
 
+    services:
+      tor:
+        image: docker.io/dockurr/tor
+
     steps:
       - name: Update fdroid repo
         shell: bash
         run: |
             export DEBIAN_FRONTEND='noninteractive'
             export GITHUB_API_KEY="${GITHUB_TOKEN:-"${GH_TOKEN:-}"}"
-            export https_proxy='http://127.0.0.1:8118'
-            socat TCP-LISTEN:8118,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/proxy.sock &
-            socat TCP-LISTEN:1080,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/ftp.sock &
+            export https_proxy='http://tor:8118'
+            # socat TCP-LISTEN:8118,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/proxy.sock &
+            # socat TCP-LISTEN:1080,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/ftp.sock &
             printf -- >|/etc/apt/apt.conf.d/proxy.conf \
                 'Acquire::http::Proxy "%s";\n' "${https_proxy}"
 
