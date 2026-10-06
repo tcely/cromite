@@ -9,6 +9,7 @@ on:
         default: 'ci'
 
 env:
+  REMOTEEXEC_ADDR: '127.0.0.1:50051'
   REMOVEDOCKERSUPPORT: true
   USELOCALIMAGE: true
   USEINTERNALNETWORK: true
@@ -19,12 +20,13 @@ jobs:
     runs-on: ${{ github.event.inputs.type }}
 
     services:
-      squid:
+      gh-proxy:
         image: uazo/squid
-      tor:
-        image: dperson/torproxy:latest
         env:
-          EXITNODE: "0"
+          REMOTEEXEC_ADDR: ${{ env.REMOTEEXEC_ADDR }}
+        volumes:
+          - /tmp/proxy:/tmp/proxy
+          - /tmp/forward-proxy:/tmp/forward-proxy
 
     container:
       image: ghcr.io/tcely/fdroidserver:latest
@@ -40,7 +42,7 @@ jobs:
             export GITHUB_API_KEY="${GITHUB_TOKEN:-"${GH_TOKEN:-}"}"
             [[ -n "${GITHUB_API_KEY}" ]] || unset -v GITHUB_API_KEY
 
-            export https_proxy='http://squid:8118'
+            export https_proxy='http://127.0.0.1:8118'
             socat TCP-LISTEN:8118,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/proxy.sock &
             socat TCP-LISTEN:1080,reuseaddr,fork UNIX-CLIENT:/tmp/forward-proxy/ftp.sock &
             printf -- >|/etc/apt/apt.conf.d/proxy.conf \
