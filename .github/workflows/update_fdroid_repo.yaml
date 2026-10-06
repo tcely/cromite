@@ -85,7 +85,9 @@ jobs:
 
                 mkdir -p "${dir}"
                 cd "${dir}" || exit
+                set -x
 
+                set +e
                 local -A downloads
                 downloads['failed']=0
                 local _arg ;
@@ -148,8 +150,9 @@ jobs:
 
             mkdir -p fdroid/repo
             test -d /usr/share/man/man1 || mkdir -p /usr/share/man/man1
-            apt install -y fdroidserver
+            # apt install -y fdroidserver
 
+            set -x
             fetch_apks {arm,{arm,x}64}_ChromePublic.apk
             mv -v -f --backup=none -t fdroid/repo/ github/cromite/*.apk 
             cd fdroid/ || exit
